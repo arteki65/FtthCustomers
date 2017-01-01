@@ -34,7 +34,7 @@ import pl.aptewicz.ftthcustomers.model.FtthIssue;
 import pl.aptewicz.ftthcustomers.network.FtthCheckerRestApiRequest;
 import pl.aptewicz.ftthcustomers.network.RequestQueueSingleton;
 import pl.aptewicz.ftthcustomers.util.ProgressUtils;
-import pl.aptewicz.ftthcustomers.util.ServerAddressUtils;
+import pl.aptewicz.ftthcustomers.util.SharedPreferencesUtils;
 
 public class LoginActivity extends AppCompatActivity {
 
@@ -165,49 +165,49 @@ public class LoginActivity extends AppCompatActivity {
 		ftthCustomer.setUsername(username);
 		ftthCustomer.setPassword(password);
 
-		ArrayList<FtthIssue> ftthIssues = new ArrayList<>();
-		FtthIssue ftthIssue = new FtthIssue();
-		ftthIssues.add(ftthIssue);
-		ftthCustomer.setFtthIssues(ftthIssues);
-		Intent dashboardActivity = new Intent(LoginActivity.this,
-				DashboardActivity.class);
-		dashboardActivity
-				.putExtra(FtthCustomer.FTTH_CUSTOMER, ftthCustomer);
-		startActivity(dashboardActivity);
+		if (SharedPreferencesUtils.isDummyLogin(this)) {
+			ArrayList<FtthIssue> ftthIssues = new ArrayList<>();
+			FtthIssue ftthIssue = new FtthIssue();
+			ftthIssues.add(ftthIssue);
+			ftthCustomer.setFtthIssues(ftthIssues);
+			Intent dashboardActivity = new Intent(LoginActivity.this, DashboardActivity.class);
+			dashboardActivity.putExtra(FtthCustomer.FTTH_CUSTOMER, ftthCustomer);
+			startActivity(dashboardActivity);
+		} else {
+			FtthCheckerRestApiRequest ftthCheckerRestApiRequest = new FtthCheckerRestApiRequest(
+					Request.Method.GET,
+					SharedPreferencesUtils.getServerHttpAddressWithContext(this) + "/ftthCustomer",
+					null, new Response.Listener<JSONObject>() {
 
-		/*FtthCheckerRestApiRequest ftthCheckerRestApiRequest = new FtthCheckerRestApiRequest(
-				Request.Method.GET,
-				ServerAddressUtils.getServerHttpAddressWithContext(this) + "/ftthCustomer", null,
-				new Response.Listener<JSONObject>() {
+				@Override
+				public void onResponse(JSONObject response) {
+					FtthCustomer ftthCustomerFromResponse = new Gson()
+							.fromJson(response.toString(), FtthCustomer.class);
+					ftthCustomerFromResponse.setPassword(ftthCustomer.getPassword());
 
-					@Override
-					public void onResponse(JSONObject response) {
-						//Gson gson = new GsonBuilder().serializeNulls().create();
-						FtthCustomer ftthCustomerFromResponse = new Gson()
-								.fromJson(response.toString(), FtthCustomer.class);
-						ftthCustomerFromResponse.setPassword(ftthCustomer.getPassword());
-
-						Intent dashboardActivity = new Intent(LoginActivity.this,
-								DashboardActivity.class);
-						dashboardActivity
-								.putExtra(FtthCustomer.FTTH_CUSTOMER, ftthCustomerFromResponse);
-						startActivity(dashboardActivity);
-						Toast.makeText(LoginActivity.this, "Authorization success",
-								Toast.LENGTH_SHORT).show();
-					}
-				}, new Response.ErrorListener() {
-
-			@Override
-			public void onErrorResponse(VolleyError error) {
-				ProgressUtils.showProgress(false, LoginActivity.this, loginFormView, progressView);
-				if (error instanceof AuthFailureError) {
-					Toast.makeText(LoginActivity.this, "Authorization failed", Toast.LENGTH_SHORT)
+					Intent dashboardActivity = new Intent(LoginActivity.this,
+							DashboardActivity.class);
+					dashboardActivity
+							.putExtra(FtthCustomer.FTTH_CUSTOMER, ftthCustomerFromResponse);
+					startActivity(dashboardActivity);
+					Toast.makeText(LoginActivity.this, "Authorization success", Toast.LENGTH_SHORT)
 							.show();
 				}
-			}
-		}, ftthCustomer);
+			}, new Response.ErrorListener() {
 
-		requestQueueSingleton.addToRequestQueue(ftthCheckerRestApiRequest);*/
+				@Override
+				public void onErrorResponse(VolleyError error) {
+					ProgressUtils
+							.showProgress(false, LoginActivity.this, loginFormView, progressView);
+					if (error instanceof AuthFailureError) {
+						Toast.makeText(LoginActivity.this, "Authorization failed",
+								Toast.LENGTH_SHORT).show();
+					}
+				}
+			}, ftthCustomer);
+
+			requestQueueSingleton.addToRequestQueue(ftthCheckerRestApiRequest);
+		}
 	}
 
 	private void resetErrors() {
