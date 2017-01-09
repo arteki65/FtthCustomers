@@ -23,7 +23,7 @@
         android:paddingLeft="@dimen/activity_horizontal_margin"
         android:paddingRight="@dimen/activity_horizontal_margin"
         android:paddingTop="@dimen/activity_vertical_margin"
-        tools:context="pl.aptewicz.nodemaps.MainActivity">
+        tools:context="pl.aptewicz.ftthcustomers.LoginActivity">
 
         <!-- Login progress -->
         <ProgressBar

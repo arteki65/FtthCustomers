@@ -7,4 +7,14 @@
         android:key="server_address"
         android:title="@string/insertServerAddress" />
 
+    <SwitchPreference
+            android:defaultValue="false"
+            android:title="@string/dummyLogin"
+            android:key="dummyLogin" />
+
+    <SwitchPreference
+            android:defaultValue="false"
+            android:title="@string/locationDummy"
+            android:key="dummyLocation" />
+
 </PreferenceScreen>

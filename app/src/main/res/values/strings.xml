@@ -79,4 +79,16 @@
     <string name="pref_title_vibrate">Vibrate</string>
     <string name="action_login_settings">Ustawienia</string>
     <string name="insertServerAddress">Zmień adres serwera</string>
+    <string name="error_invalid_password">Nieprawidłowe hasło</string>
+    <string name="error_field_required">Pole wymagane</string>
+    <string name="action_dashboard_add_issue">Utwórz zgłoszenie</string>
+    <string name="issues_list_title">Lista aktywnych zgłoszeń</string>
+    <string name="no_active_issues">Brak aktywnych zgłoszeń</string>
+    <string name="add_issue">Utwórz zgłoszenie</string>
+    <string name="insert_issue_description">Wprowadź opis zgłoszenia</string>
+    <string name="add_issue_text">Opis zgłoszenia</string>
+    <string name="geolocation">Usługi lokalizacyjne</string>
+    <string name="debugMode">Tryb debug</string>
+    <string name="dummyLogin">Tryb dummy login</string>
+    <string name="locationDummy">Tryb location dummy</string>
 </resources>
