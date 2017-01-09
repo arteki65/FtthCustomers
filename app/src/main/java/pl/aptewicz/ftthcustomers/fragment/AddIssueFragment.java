@@ -30,162 +30,184 @@ import pl.aptewicz.ftthcustomers.R;
 import pl.aptewicz.ftthcustomers.model.FtthCustomer;
 import pl.aptewicz.ftthcustomers.model.FtthIssue;
 import pl.aptewicz.ftthcustomers.model.FtthRestApiError;
-import pl.aptewicz.ftthcustomers.model.FtthRestApiExceptionConstants;
 import pl.aptewicz.ftthcustomers.network.FtthCheckerRestApiRequest;
 import pl.aptewicz.ftthcustomers.network.RequestQueueSingleton;
 import pl.aptewicz.ftthcustomers.util.PermissionUtils;
 import pl.aptewicz.ftthcustomers.util.ProgressUtils;
 import pl.aptewicz.ftthcustomers.util.SharedPreferencesUtils;
 
-public class AddIssueFragment extends Fragment implements GoogleApiClient.ConnectionCallbacks,
-        GoogleApiClient.OnConnectionFailedListener {
+public class AddIssueFragment extends Fragment
+		implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
 
-    private FtthCustomer ftthCustomer;
+	private FtthCustomer ftthCustomer;
 
-    private EditText issueDescription;
+	private EditText issueDescription;
 
-    private View addIssueForm;
+	private View addIssueForm;
 
-    private View progressView;
+	private View progressView;
 
-    private OnIssueAddedListener onIssueAddedListener;
+	private OnIssueAddedListener onIssueAddedListener;
 
-    private RequestQueueSingleton requestQueueSingleton;
+	private RequestQueueSingleton requestQueueSingleton;
 
-    private GoogleApiClient googleApiClient;
+	private GoogleApiClient googleApiClient;
 
-    private Location lastLocation;
+	private Location lastLocation;
 
-    @Override
-    public void onConnected(@Nullable Bundle bundle) {
-        if (PermissionUtils.isEnoughPermissionsGranted(getContext())) {
-            //noinspection MissingPermission
-            lastLocation = LocationServices.FusedLocationApi.getLastLocation(googleApiClient);
-        }
-    }
+	@Override
+	public void onConnected(
+			@Nullable
+					Bundle bundle) {
+		if (PermissionUtils.isNotEnoughPermissionsGranted(getContext())) {
+			return;
+		}
+		//noinspection MissingPermission
+		lastLocation = LocationServices.FusedLocationApi.getLastLocation(googleApiClient);
+	}
 
-    @Override
-    public void onConnectionSuspended(int i) {
+	@Override
+	public void onConnectionSuspended(int i) {
 
-    }
+	}
 
-    @Override
-    public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
+	@Override
+	public void onConnectionFailed(
+			@NonNull
+					ConnectionResult connectionResult) {
 
-    }
+	}
 
-    public interface OnIssueAddedListener {
+	public interface OnIssueAddedListener {
 
-        void onIssueAdded(FtthCustomer ftthCustomer);
-    }
+		void onIssueAdded(FtthCustomer ftthCustomer);
+	}
 
-    @Override
-    public void onAttach(Context context) {
-        super.onAttach(context);
+	@Override
+	public void onStop() {
+		googleApiClient.disconnect();
+		super.onStop();
+	}
 
-        onIssueAddedListener = (OnIssueAddedListener) context;
-    }
+	@Override
+	public void onCreate(
+			@Nullable
+					Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
 
-    @Nullable
-    @Override
-    public View onCreateView(LayoutInflater inflater,
-                             @Nullable
-                                     ViewGroup container,
-                             @Nullable
-                                     Bundle savedInstanceState) {
-        View rootView = inflater.inflate(R.layout.add_issue_fragment, container, false);
+		if (googleApiClient == null) {
+			googleApiClient = new GoogleApiClient.Builder(getContext()).addConnectionCallbacks(this)
+					.addOnConnectionFailedListener(this).addApi(LocationServices.API).build();
+		}
+	}
 
-        ftthCustomer = (FtthCustomer) getArguments().getSerializable(FtthCustomer.FTTH_CUSTOMER);
+	@Override
+	public void onStart() {
+		googleApiClient.connect();
+		super.onStart();
+	}
 
-        Button addIssueButton = (Button) rootView.findViewById(R.id.add_issue_button);
-        addIssueButton.setOnClickListener(new View.OnClickListener() {
+	@Override
+	public void onAttach(Context context) {
+		super.onAttach(context);
 
-            @Override
-            public void onClick(View v) {
-                addIssue();
-            }
-        });
+		onIssueAddedListener = (OnIssueAddedListener) context;
+	}
 
-        issueDescription = (EditText) rootView.findViewById(R.id.issue_description);
-        addIssueForm = rootView.findViewById(R.id.add_issue_form);
-        progressView = rootView.findViewById(R.id.add_issue_progress);
+	@Nullable
+	@Override
+	public View onCreateView(LayoutInflater inflater,
+			@Nullable
+					ViewGroup container,
+			@Nullable
+					Bundle savedInstanceState) {
+		View rootView = inflater.inflate(R.layout.add_issue_fragment, container, false);
 
-        requestQueueSingleton = RequestQueueSingleton.getInstance(getActivity());
+		ftthCustomer = (FtthCustomer) getArguments().getSerializable(FtthCustomer.FTTH_CUSTOMER);
 
-        if (googleApiClient == null) {
-            googleApiClient = new GoogleApiClient.Builder(getContext()).addConnectionCallbacks(this)
-                    .addOnConnectionFailedListener(this).addApi(LocationServices.API).build();
-        }
+		Button addIssueButton = (Button) rootView.findViewById(R.id.add_issue_button);
+		addIssueButton.setOnClickListener(new View.OnClickListener() {
 
-        return rootView;
-    }
+			@Override
+			public void onClick(View v) {
+				addIssue();
+			}
+		});
 
-    public void addIssue() {
-        InputMethodManager inputManager = (InputMethodManager) getActivity()
-                .getSystemService(Context.INPUT_METHOD_SERVICE);
-        View v = getActivity().getCurrentFocus();
-        if (v != null) {
-            inputManager.hideSoftInputFromWindow(v.getWindowToken(), 0);
-        }
-        ProgressUtils.showProgress(true, getContext(), addIssueForm, progressView);
+		issueDescription = (EditText) rootView.findViewById(R.id.issue_description);
+		addIssueForm = rootView.findViewById(R.id.add_issue_form);
+		progressView = rootView.findViewById(R.id.add_issue_progress);
 
-        final FtthIssue ftthIssue = new FtthIssue();
-        ftthIssue.setDescription(issueDescription.getText().toString());
+		requestQueueSingleton = RequestQueueSingleton.getInstance(getActivity());
 
-        if (SharedPreferencesUtils.isDummyLocation(getContext())) {
-            ftthIssue.setLatitude(52.220259);
-            ftthIssue.setLongitude(21.011758);
-        } else {
-            if (PermissionUtils.isEnoughPermissionsGranted(getContext())) {
-                //noinspection MissingPermission
-                lastLocation = LocationServices.FusedLocationApi.getLastLocation(googleApiClient);
-                ftthIssue.setLatitude(lastLocation.getLatitude());
-                ftthIssue.setLongitude(lastLocation.getLongitude());
-            }
-        }
+		return rootView;
+	}
 
-        try {
-            FtthCheckerRestApiRequest addIssueRequest = new FtthCheckerRestApiRequest(
-                    Request.Method.PUT,
-                    SharedPreferencesUtils.getServerHttpAddressWithContext(getContext())
-                            + "/ftthIssue", new JSONObject(new Gson().toJson(ftthIssue)),
-                    new Response.Listener<JSONObject>() {
+	public void addIssue() {
+		InputMethodManager inputManager = (InputMethodManager) getActivity()
+				.getSystemService(Context.INPUT_METHOD_SERVICE);
+		View v = getActivity().getCurrentFocus();
+		if (v != null) {
+			inputManager.hideSoftInputFromWindow(v.getWindowToken(), 0);
+		}
+		ProgressUtils.showProgress(true, getContext(), addIssueForm, progressView);
 
-                        @Override
-                        public void onResponse(JSONObject response) {
-                            Toast.makeText(AddIssueFragment.this.getContext(),
-                                    "Zgłoszenie utworzone", Toast.LENGTH_SHORT).show();
-                            FtthIssue ftthIssueFromResponse = new Gson()
-                                    .fromJson(response.toString(), FtthIssue.class);
-                            ftthCustomer.getFtthIssues().add(ftthIssueFromResponse);
-                            ProgressUtils
-                                    .showProgress(false, getContext(), addIssueForm, progressView);
-                            onIssueAddedListener.onIssueAdded(ftthCustomer);
-                        }
-                    }, new Response.ErrorListener() {
+		final FtthIssue ftthIssue = new FtthIssue();
+		ftthIssue.setDescription(issueDescription.getText().toString());
 
-                @Override
-                public void onErrorResponse(VolleyError error) {
-                    ProgressUtils.showProgress(false, getContext(), addIssueForm, progressView);
-                    if (error instanceof ServerError && error.networkResponse.statusCode == 500) {
-                        FtthRestApiError ftthRestApiError = new Gson()
-                                .fromJson(new String(error.networkResponse.data),
-                                        FtthRestApiError.class);
-                        Toast.makeText(getContext(),
-                                ftthRestApiError.translate(),
-                                Toast.LENGTH_LONG).show();
-                    } else {
-                        Toast.makeText(AddIssueFragment.this.getContext(),
-                                "Wystąpił niezidentfikowany " +
-                                        "błąd podczas tworzenia zgłoszenia", Toast.LENGTH_SHORT)
-                                .show();
-                    }
-                }
-            }, ftthCustomer);
+		if (SharedPreferencesUtils.isDummyLocation(getContext())) {
+			ftthIssue.setLatitude(52.220259);
+			ftthIssue.setLongitude(21.011758);
+		} else {
+			if (PermissionUtils.isNotEnoughPermissionsGranted(getContext())) {
+				return;
+			}
+			//noinspection MissingPermission
+			lastLocation = LocationServices.FusedLocationApi.getLastLocation(googleApiClient);
+			ftthIssue.setLatitude(lastLocation.getLatitude());
+			ftthIssue.setLongitude(lastLocation.getLongitude());
+		}
 
-            requestQueueSingleton.addToRequestQueue(addIssueRequest);
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-    }
+		try {
+			FtthCheckerRestApiRequest addIssueRequest = new FtthCheckerRestApiRequest(
+					Request.Method.PUT,
+					SharedPreferencesUtils.getServerHttpAddressWithContext(getContext())
+							+ "/ftthIssue", new JSONObject(new Gson().toJson(ftthIssue)),
+					new Response.Listener<JSONObject>() {
+
+						@Override
+						public void onResponse(JSONObject response) {
+							Toast.makeText(AddIssueFragment.this.getContext(),
+									"Zgłoszenie utworzone", Toast.LENGTH_SHORT).show();
+							FtthIssue ftthIssueFromResponse = new Gson()
+									.fromJson(response.toString(), FtthIssue.class);
+							ftthCustomer.getFtthIssues().add(ftthIssueFromResponse);
+							ProgressUtils
+									.showProgress(false, getContext(), addIssueForm, progressView);
+							onIssueAddedListener.onIssueAdded(ftthCustomer);
+						}
+					}, new Response.ErrorListener() {
+
+				@Override
+				public void onErrorResponse(VolleyError error) {
+					ProgressUtils.showProgress(false, getContext(), addIssueForm, progressView);
+					if (error instanceof ServerError && error.networkResponse.statusCode == 500) {
+						FtthRestApiError ftthRestApiError = new Gson()
+								.fromJson(new String(error.networkResponse.data),
+										FtthRestApiError.class);
+						Toast.makeText(getContext(), ftthRestApiError.translate(),
+								Toast.LENGTH_LONG).show();
+					} else {
+						Toast.makeText(AddIssueFragment.this.getContext(),
+								"Wystąpił niezidentfikowany " + "błąd podczas tworzenia zgłoszenia",
+								Toast.LENGTH_SHORT).show();
+					}
+				}
+			}, ftthCustomer);
+
+			requestQueueSingleton.addToRequestQueue(addIssueRequest);
+		} catch (JSONException e) {
+			e.printStackTrace();
+		}
+	}
 }
