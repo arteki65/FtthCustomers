@@ -19,6 +19,8 @@ public class IssuesListFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.issues_list_fragment, container, false);
 
+        getActivity().setTitle(getString(R.string.issues_list_title));
+
         FtthCustomer ftthCustomer = (FtthCustomer) getArguments().getSerializable(FtthCustomer.FTTH_CUSTOMER);
 
         if(ftthCustomer != null) {

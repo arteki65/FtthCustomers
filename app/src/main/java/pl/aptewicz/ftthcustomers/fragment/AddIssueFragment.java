@@ -95,6 +95,8 @@ public class AddIssueFragment extends Fragment
 					Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 
+		getActivity().setTitle("Dodawanie nowego zgłoszenia");
+
 		if (googleApiClient == null) {
 			googleApiClient = new GoogleApiClient.Builder(getContext()).addConnectionCallbacks(this)
 					.addOnConnectionFailedListener(this).addApi(LocationServices.API).build();
